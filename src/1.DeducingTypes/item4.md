@@ -55,7 +55,7 @@ error: 'yType' uses undefined class 'TD<const int *>'
 std::cout << typeid(x).name() << '\n';  //显示x和y的类型
 std::cout << typeid(y).name() << '\n';
 ````
-这种方法对一个对象如`x`或`y`调用`typeid`产生一个`std::type_info`的对象，然后`std::type_info`里面的成员函数`name()`来产生一个C风格的字符串（即一个`const char*`）表示变量的名字。
+这种方法对一个对象如`x`或`y`<u>调用`typeid`产生一个`std::type_info`的对象，然后`std::type_info`里面的成员函数`name()`来产生一个C风格的字符串（即一个`const char*`）表示变量的名字。</u>
 
 调用`std::type_info::name`不保证返回任何有意义的东西，但是库的实现者尝试尽量使它们返回的结果有用。实现者们对于“有用”有不同的理解。举个例子，GNU和Clang环境下`x`的类型会显示为”`i`“，`y`会显示为”`PKi`“，这样的输出你必须要问问编译器实现者们才能知道他们的意义：”`i`“表示”`int`“，”`PK`“表示”pointer to ~~`konst`~~ `const`“（指向常量的指针）。（这些编译器都提供一个工具`c++filt`，解释这些“混乱的”类型）Microsoft的编译器输出得更直白一些：对于`x`输出”`int`“对于`y`输出”`int const *`“
 
@@ -101,9 +101,9 @@ param = class Widget const *
 ````
 这三个独立的编译器产生了相同的信息并表示信息非常准确，当然看起来不是那么准确。在模板`f`中，`param`的声明类型是`const T&`。难道你们不觉得`T`和`param`类型相同很奇怪吗？比如`T`是`int`，`param`的类型应该是`const int&`而不是相同类型才对吧。
 
-遗憾的是，事实就是这样，`std::type_info::name`的结果并不总是可信的，就像上面一样，三个编译器对`param`的报告都是错误的。因为它们本质上可以不正确，因为`std::type_info::name`规范批准像传值形参一样来对待这些类型。正如[Item1](../1.DeducingTypes/item1.md)提到的，如果传递的是一个引用，那么引用部分（reference-ness）将被忽略，如果忽略后还具有`const`或者`volatile`，那么常量性`const`ness或者易变性`volatile`ness也会被忽略。那就是为什么`param`的类型`const Widget * const &`会输出为`const Widget *`，首先引用被忽略，然后这个指针自身的常量性`const`ness被忽略，剩下的就是指针指向一个常量对象。
+<u>遗憾的是，事实就是这样，`std::type_info::name`的结果并不总是可信的，就像上面一样，三个编译器对`param`的报告都是错误的。因为它们本质上可以不正确，因为`std::type_info::name`规范批准像传值形参一样来对待这些类型</u>。正如[Item1](../1.DeducingTypes/item1.md)提到的，如果传递的是一个引用，那么引用部分（reference-ness）将被忽略，如果忽略后还具有`const`或者`volatile`，那么常量性`const`ness或者易变性`volatile`ness也会被忽略。那就是为什么`param`的类型`const Widget * const &`会输出为`const Widget *`，首先引用被忽略，然后这个指针自身的常量性`const`ness被忽略，剩下的就是指针指向一个常量对象。
 
-同样遗憾的是，IDE编辑器显示的类型信息也不总是可靠的，或者说不总是有用的。还是一样的例子，一个IDE编辑器可能会把`T`的类型显示为（我没有胡编乱造）：
+<u>同样遗憾的是，IDE编辑器显示的类型信息也不总是可靠的</u>，或者说不总是有用的。还是一样的例子，一个IDE编辑器可能会把`T`的类型显示为（我没有胡编乱造）：
 ````cpp
 const
 std::_Simple_types<std::_Wrap_alloc<std::_Vec_base_types<Widget,
@@ -163,5 +163,5 @@ param = class Widget const * const &
 
 **请记住：**
 
-+ 类型推断可以从IDE看出，从编译器报错看出，从Boost TypeIndex库的使用看出
-+ 这些工具可能既不准确也无帮助，所以理解C++类型推导规则才是最重要的
++ <u>类型推断可以从IDE看出，从编译器报错看出，从Boost TypeIndex库的使用看出
++ 这些工具可能既不准确也无帮助，所以理解C++类型推导规则才是最重要的</u>

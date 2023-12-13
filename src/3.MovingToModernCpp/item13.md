@@ -2,7 +2,7 @@
 
 **Item 13: Prefer `const_iterators` to `iterators`**
 
-STL `const_iterator`等价于指向常量的指针（pointer-to-`const`）。它们都指向不能被修改的值。标准实践是能加上`const`就加上，这也指示我们需要一个迭代器时只要没必要修改迭代器指向的值，就应当使用`const_iterator`。
+<u>STL `const_iterator`等价于指向常量的指针（pointer-to-`const`）。它们都指向不能被修改的值。标准实践是能加上`const`就加上，这也指示我们需要一个迭代器时只要没必要修改迭代器指向的值，就应当使用`const_iterator`。</u>
 
 上面的说法对C++11和C++98都是正确的，但是在C++98中，标准库对`const_iterator`的支持不是很完整。首先不容易创建它们，其次就算你有了它，它的使用也是受限的。假如你想在`std::vector<int>`中查找第一次出现1983（C++代替C with classes的那一年）的位置，然后插入1998（第一个ISO C++标准被接纳的那一年）。如果*vector*中没有1983，那么就在*vector*尾部插入。在C++98中使用`iterator`可以很容易做到：
 
@@ -39,7 +39,7 @@ values.insert(static_cast<IterT>(ci), 1998);    //可能无法通过编译，
 
 老实说，上面的代码也可能无法编译，因为没有一个可移植的从`const_iterator`到`iterator`的方法，即使使用`static_cast`也不行。甚至传说中的牛刀`reinterpret_cast`也杀不了这条鸡。（它不是C++98的限制，也不是C++11的限制，只是`const_iterator`就是不能转换为`iterator`，不管看起来对它们施以转换是有多么合理。）不过有办法生成一个`iterator`，使其指向和`const_iterator`指向相同，但是看起来不明显，也没有广泛应用，在这本书也不值得讨论。除此之外，我希望目前我陈述的观点是清晰的：`const_iterator`在C++98中会有很多问题，不如它的兄弟（译注：指`iterator`）有用。最终，开发者们不再相信能加`const`就加它的教条，而是只在实用的地方加它，C++98的`const_iterator`不是那么实用。
 
-所有的这些都在C++11中改变了，现在`const_iterator`既容易获取又容易使用。容器的成员函数`cbegin`和`cend`产出`const_iterator`，甚至对于non-`const`容器也可用，那些之前使用*iterator*指示位置（如`insert`和`erase`）的STL成员函数也可以使用`const_iterator`了。使用C++11 `const_iterator`重写C++98使用`iterator`的代码也稀松平常：
+所有的这些都在C++11中改变了，现在`const_iterator`既容易获取又容易使用。<u>容器的成员函数`cbegin`和`cend`产出`const_iterator`，甚至对于non-`const`容器也可用</u>，那些之前使用*iterator*指示位置（如`insert`和`erase`）的STL成员函数也可以使用`const_iterator`了。使用C++11 `const_iterator`重写C++98使用`iterator`的代码也稀松平常：
 ```cpp
 std::vector<int> values;                                //和之前一样
 …
