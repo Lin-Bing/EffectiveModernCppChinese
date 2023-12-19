@@ -25,9 +25,9 @@ auto spw1(std::make_shared<Widget>());      //使用make函数
 std::shared_ptr<Widget> spw2(new Widget);   //不使用make函数
 ```
 
-我高亮了关键区别：使用`new`的版本重复了类型，但是`make`函数的版本没有。（译者注：这里高亮的是`Widget`，用`new`的声明语句需要写2遍`Widget`，`make`函数只需要写一次。）重复写类型和软件工程里面一个关键原则相冲突：应该避免重复代码。源代码中的重复增加了编译的时间，会导致目标代码冗余，并且通常会让代码库使用更加困难。它经常演变成不一致的代码，而代码库中的不一致常常导致bug。此外，打两次字比一次更费力，而且没人不喜欢少打字吧？
+我高亮了关键区别：<u>使用`new`的版本重复了类型，但是`make`函数的版本没有</u>。（译者注：这里高亮的是`Widget`，用`new`的声明语句需要写2遍`Widget`，`make`函数只需要写一次。）重复写类型和软件工程里面一个关键原则相冲突：应该避免重复代码。源代码中的重复增加了编译的时间，会导致目标代码冗余，并且通常会让代码库使用更加困难。它经常演变成不一致的代码，而代码库中的不一致常常导致bug。此外，打两次字比一次更费力，而且没人不喜欢少打字吧？
 
-第二个使用`make`函数的原因和异常安全有关。假设我们有个函数按照某种优先级处理`Widget`：
+<<u>>第二个使用`make`函数的原因和异常安全有关</u>。假设我们有个函数按照某种优先级处理`Widget`：
 
 ```c++
 void processWidget(std::shared_ptr<Widget> spw, int priority);
@@ -50,21 +50,21 @@ processWidget(std::shared_ptr<Widget>(new Widget),  //潜在的资源泄漏！
 
 如注释所说，这段代码可能在`new`一个`Widget`时发生泄漏。为何？调用的代码和被调用的函数都用`std::shared_ptr`s，且`std::shared_ptr`s就是设计出来防止泄漏的。它们会在最后一个`std::shared_ptr`销毁时自动释放所指向的内存。如果每个人在每个地方都用`std::shared_ptr`s，这段代码怎么会泄漏呢？
 
-答案和编译器将源码转换为目标代码有关。在运行时，一个函数的实参必须先被计算，这个函数再被调用，所以在调用`processWidget`之前，必须执行以下操作，`processWidget`才开始执行：
+<u>答案和编译器将源码转换为目标代码有关</u>。在运行时，一个函数的实参必须先被计算，这个函数再被调用，所以在调用`processWidget`之前，必须执行以下操作，`processWidget`才开始执行：
 
 - 表达式“`new Widget`”必须计算，例如，一个`Widget`对象必须在堆上被创建
 - 负责管理`new`出来指针的`std::shared_ptr<Widget>`构造函数必须被执行
 -  `computePriority`必须运行
 
-编译器不需要按照执行顺序生成代码。“`new Widget`”必须在`std::shared_ptr`的构造函数被调用前执行，因为`new`出来的结果作为构造函数的实参，但`computePriority`可能在这之前，之后，或者**之间**执行。也就是说，编译器可能按照这个执行顺序生成代码：
+<u>编译器不需要按照执行顺序生成代码</u>。“`new Widget`”必须在`std::shared_ptr`的构造函数被调用前执行，因为`new`出来的结果作为构造函数的实参，但`computePriority`可能在这之前，之后，或者**之间**执行。也就是说，编译器可能按照这个执行顺序生成代码：
 
 1. 执行“`new Widget`”
 2. 执行`computePriority`
 3. 运行`std::shared_ptr`构造函数
 
-如果按照这样生成代码，并且在运行时`computePriority`产生了异常，那么第一步动态分配的`Widget`就会泄漏。因为它永远都不会被第三步的`std::shared_ptr`所管理了。
+<u>如果按照这样生成代码，并且在运行时`computePriority`产生了异常，那么第一步动态分配的`Widget`就会泄漏</u>。因为它永远都不会被第三步的`std::shared_ptr`所管理了。
 
-使用`std::make_shared`可以防止这种问题。调用代码看起来像是这样：
+<u>使用`std::make_shared`可以防止这种问题</u>。调用代码看起来像是这样：
 
 ```c++
 processWidget(std::make_shared<Widget>(),   //没有潜在的资源泄漏
@@ -75,12 +75,12 @@ processWidget(std::make_shared<Widget>(),   //没有潜在的资源泄漏
 
 如果我们将`std::shared_ptr`，`std::make_shared`替换成`std::unique_ptr`，`std::make_unique`，同样的道理也适用。因此，在编写异常安全代码时，使用`std::make_unique`而不是`new`与使用`std::make_shared`（而不是`new`）同样重要。
 
-`std::make_shared`的一个特性（与直接使用`new`相比）是效率提升。使用`std::make_shared`允许编译器生成更小，更快的代码，并使用更简洁的数据结构。考虑以下对new的直接使用：
+<u>`std::make_shared`的一个特性（与直接使用`new`相比）是效率提升。使用`std::make_shared`允许编译器生成更小，更快的代码，并使用更简洁的数据结构</u>。考虑以下对new的直接使用：
 
 ```c++
 std::shared_ptr<Widget> spw(new Widget);
 ```
-显然，这段代码需要进行内存分配，但它实际上执行了两次。[Item19](../4.SmartPointers/item19.md)解释了每个`std::shared_ptr`指向一个控制块，其中包含被指向对象的引用计数，还有其他东西。这个控制块的内存在`std::shared_ptr`构造函数中分配。因此，直接使用`new`需要为`Widget`进行一次内存分配，为控制块再进行一次内存分配。
+显然，<u>这段代码需要进行内存分配，但它实际上执行了两次。[Item19](../4.SmartPointers/item19.md)解释了每个`std::shared_ptr`指向一个控制块，其中包含被指向对象的引用计数，还有其他东西。这个控制块的内存在`std::shared_ptr`构造函数中分配。因此，直接使用`new`需要为`Widget`进行一次内存分配，为控制块再进行一次内存分配。</u>
 
 如果使用`std::make_shared`代替：
 
@@ -88,13 +88,13 @@ std::shared_ptr<Widget> spw(new Widget);
 auto spw = std::make_shared<Widget>();
 ```
 
-一次分配足矣。这是因为`std::make_shared`分配一块内存，同时容纳了`Widget`对象和控制块。这种优化减少了程序的静态大小，因为代码只包含一个内存分配调用，并且它提高了可执行代码的速度，因为内存只分配一次。此外，使用`std::make_shared`避免了对控制块中的某些簿记信息的需要，潜在地减少了程序的总内存占用。
+一次分配足矣。这是因为<u>`std::make_shared`分配一块内存，同时容纳了`Widget`对象和控制块。这种优化减少了程序的静态大小，因为代码只包含一个内存分配调用，并且它提高了可执行代码的速度，因为内存只分配一次</u>。此外，使用`std::make_shared`避免了对控制块中的某些簿记信息的需要，潜在地减少了程序的总内存占用。
 
 对于`std::make_shared`的效率分析同样适用于`std::allocate_shared`，因此`std::make_shared`的性能优势也扩展到了该函数。
 
-更倾向于使用`make`函数而不是直接使用`new`的争论非常激烈。尽管它们在软件工程、异常安全和效率方面具有优势，但本条款的建议是，更**倾向于**使用`make`函数，而不是完全依赖于它们。这是因为有些情况下它们不能或不应该被使用。
+更倾向于使用`make`函数而不是直接使用`new`的争论非常激烈。尽管它们在软件工程、异常安全和效率方面具有优势，但本条款的建议是，更**倾向于**使用`make`函数，而不是完全依赖于它们。这是因为<u>有些情况下它们不能或不应该被使用</u>。
 
-例如，`make`函数都不允许指定自定义删除器（见[Item18](../4.SmartPointers/item18.md)和[19](../4.SmartPointers/item19.md)），但是`std::unique_ptr`和`std::shared_ptr`有构造函数这么做。有个`Widget`的自定义删除器：
+例如，<u>`make`函数都不允许指定自定义删除器</u>（见[Item18](../4.SmartPointers/item18.md)和[19](../4.SmartPointers/item19.md)），但是`std::unique_ptr`和`std::shared_ptr`有构造函数这么做。有个`Widget`的自定义删除器：
 ```cpp
 auto widgetDeleter = [](Widget* pw) { … };
 ```
@@ -115,7 +115,7 @@ auto spv = std::make_shared<std::vector<int>>(10, 20);
 ```
 生成的智能指针指向带有10个元素的`std::vector`，每个元素值为20，还是指向带有两个元素的`std::vector`，其中一个元素值10，另一个为20？或者结果是不确定的？
 
-好消息是这并非不确定：两种调用都创建了10个元素，每个值为20的`std::vector`。这意味着在`make`函数中，完美转发使用小括号，而不是花括号。坏消息是如果你想用花括号初始化指向的对象，你必须直接使用`new`。使用`make`函数会需要能够完美转发花括号初始化的能力，但是，正如[Item30](../5.RRefMovSemPerfForw/item30.md)所说，花括号初始化无法完美转发。但是，[Item30](../5.RRefMovSemPerfForw/item30.md)介绍了一个变通的方法：使用`auto`类型推导从花括号初始化创建`std::initializer_list`对象（见[Item2](../1.DeducingTypes/item2.md)），然后将`auto`创建的对象传递给`make`函数。
+好消息是这并非不确定：两种调用都创建了10个元素，每个值为20的`std::vector`。这意味着<u>在`make`函数中，完美转发使用小括号，而不是花括号。坏消息是如果你想用花括号初始化指向的对象，你必须直接使用`new`</u>。使用`make`函数会需要能够完美转发花括号初始化的能力，但是，正如[Item30](../5.RRefMovSemPerfForw/item30.md)所说，花括号初始化无法完美转发。但是，[Item30](../5.RRefMovSemPerfForw/item30.md)介绍了一个变通的方法：使用`auto`类型推导从花括号初始化创建`std::initializer_list`对象（见[Item2](../1.DeducingTypes/item2.md)），然后将`auto`创建的对象传递给`make`函数。
 
 ```cpp
 //创建std::initializer_list
@@ -128,11 +128,11 @@ auto spv = std::make_shared<std::vector<int>>(initList);
 
 一些类重载了`operator new`和`operator delete`。这些函数的存在意味着对这些类型的对象的全局内存分配和释放是不合常规的。设计这种定制操作往往只会精确的分配、释放对象大小的内存。例如，`Widget`类的`operator new`和`operator delete`只会处理`sizeof(Widget)`大小的内存块的分配和释放。这种系列行为不太适用于`std::shared_ptr`对自定义分配（通过`std::allocate_shared`）和释放（通过自定义删除器）的支持，因为`std::allocate_shared`需要的内存总大小不等于动态分配的对象大小，还需要**再加上**控制块大小。因此，使用`make`函数去创建重载了`operator new`和`operator delete`类的对象是个典型的糟糕想法。
 
-与直接使用`new`相比，`std::make_shared`在大小和速度上的优势源于`std::shared_ptr`的控制块与指向的对象放在同一块内存中。当对象的引用计数降为0，对象被销毁（即析构函数被调用）。但是，因为控制块和对象被放在同一块分配的内存块中，直到控制块的内存也被销毁，对象占用的内存才被释放。
+<u>与直接使用`new`相比，`std::make_shared`在大小和速度上的优势源于`std::shared_ptr`的控制块与指向的对象放在同一块内存中。当对象的引用计数降为0，对象被销毁（即析构函数被调用）。但是，因为控制块和对象被放在同一块分配的内存块中，直到控制块的内存也被销毁，对象占用的内存才被释放</u>。
 
 正如我说，控制块除了引用计数，还包含簿记信息。引用计数追踪有多少`std::shared_ptr`s指向控制块，但控制块还有第二个计数，记录多少个`std::weak_ptr`s指向控制块。第二个引用计数就是*weak count*。（实际上，*weak count*的值不总是等于指向控制块的`std::weak_ptr`的数目，因为库的实现者找到一些方法在*weak count*中添加附加信息，促进更好的代码产生。为了本条款的目的，我们会忽略这一点，假定*weak count*的值等于指向控制块的`std::weak_ptr`的数目。）当一个`std::weak_ptr`检测它是否过期时（见[Item19](../4.SmartPointers/item19.md)），它会检测指向的控制块中的引用计数（而不是*weak count*）。如果引用计数是0（即对象没有`std::shared_ptr`再指向它，已经被销毁了），`std::weak_ptr`就已经过期。否则就没过期。
 
-只要`std::weak_ptr`s引用一个控制块（即*weak count*大于零），该控制块必须继续存在。只要控制块存在，包含它的内存就必须保持分配。通过`std::shared_ptr`的`make`函数分配的内存，直到最后一个`std::shared_ptr`和最后一个指向它的`std::weak_ptr`已被销毁，才会释放。
+<u>只要`std::weak_ptr`s引用一个控制块（即*weak count*大于零），该控制块必须继续存在。只要控制块存在，包含它的内存就必须保持分配。通过`std::shared_ptr`的`make`函数分配的内存，直到最后一个`std::shared_ptr`和最后一个指向它的`std::weak_ptr`已被销毁，才会释放</u>。
 
 如果对象类型非常大，而且销毁最后一个`std::shared_ptr`和销毁最后一个`std::weak_ptr`之间的时间很长，那么在销毁对象和释放它所占用的内存之间可能会出现延迟。
 
@@ -175,7 +175,7 @@ std::shared_ptr<ReallyBigType> pBigObj(new ReallyBigType);
             //控制块内存被释放
 ```
 
-如果你发现自己处于不可能或不合适使用`std::make_shared`的情况下，你将想要保证自己不受我们之前看到的异常安全问题的影响。最好的方法是确保在直接使用`new`时，在**一个不做其他事情的语句中**，立即将结果传递到智能指针构造函数。这可以防止编译器生成的代码在使用`new`和调用管理`new`出来对象的智能指针的构造函数之间发生异常。
+<u>如果你发现自己处于不可能或不合适使用`std::make_shared`的情况下，你将想要保证自己不受我们之前看到的异常安全问题的影响。最好的方法是确保在直接使用`new`时，在**一个不做其他事情的语句中**，立即将结果传递到智能指针构造函数。这可以防止编译器生成的代码在使用`new`和调用管理`new`出来对象的智能指针的构造函数之间发生异常</u>。
 
 例如，考虑我们前面讨论过的`processWidget`函数，对其非异常安全调用的一个小修改。这一次，我们将指定一个自定义删除器:
 ```c++
@@ -211,7 +211,7 @@ processWidget(
 ```c++
 processWidget(spw, computePriority());              //实参是左值
 ```
-因为`processWidget`的`std::shared_ptr`形参是传值，从右值构造只需要移动，而传递左值构造需要拷贝。对`std::shared_ptr`而言，这种区别是有意义的，因为拷贝`std::shared_ptr`需要对引用计数原子递增，移动则不需要对引用计数有操作。为了使异常安全代码达到非异常安全代码的性能水平，我们需要用`std::move`将`spw`转换为右值（见[Item23](../5.RRefMovSemPerfForw/item23.md)）：
+因为`processWidget`的`std::shared_ptr`形参是传值，<u>从右值构造只需要移动，而传递左值构造需要拷贝</u>。对`std::shared_ptr`而言，这种区别是有意义的，因为拷贝`std::shared_ptr`需要对引用计数原子递增，移动则不需要对引用计数有操作。<u>为了使异常安全代码达到非异常安全代码的性能水平，我们需要用`std::move`将`spw`转换为右值</u>（见[Item23](../5.RRefMovSemPerfForw/item23.md)）：
 ```c++
 processWidget(std::move(spw), computePriority());   //高效且异常安全
 ```
