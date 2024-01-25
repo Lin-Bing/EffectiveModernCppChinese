@@ -2,18 +2,18 @@
 
 **Item 37: Make `std::thread`s unjoinable on all paths**
 
-每个`std::thread`对象处于两个状态之一：**可结合的**（*joinable*）或者**不可结合的**（*unjoinable*）。可结合状态的`std::thread`对应于正在运行或者可能要运行的异步执行线程。比如，对应于一个阻塞的（*blocked*）或者等待调度的线程的`std::thread`是可结合的，对应于运行结束的线程的`std::thread`也可以认为是可结合的。
+<u>每个`std::thread`对象处于两个状态之一：**可结合的**（*joinable*）或者**不可结合的**（*unjoinable*）</u>。<u>可结合状态的`std::thread`对应于正在运行或者可能要运行的异步执行线程。比如，对应于一个阻塞的（*blocked*）或者等待调度的线程的`std::thread`是可结合的，对应于运行结束的线程的`std::thread`也可以认为是可结合的</u>。
 
-不可结合的`std::thread`正如所期待：一个不是可结合状态的`std::thread`。不可结合的`std::thread`对象包括：
+<u>不可结合的`std::thread`正如所期待：一个不是可结合状态的`std::thread`。不可结合的`std::thread`对象包括：
 
 - **默认构造的`std::thread`s**。这种`std::thread`没有函数执行，因此没有对应到底层执行线程上。
 - **已经被移动走的`std::thread`对象**。移动的结果就是一个`std::thread`原来对应的执行线程现在对应于另一个`std::thread`。
 - **已经被`join`的`std::thread`** 。在`join`之后，`std::thread`不再对应于已经运行完了的执行线程。
-- **已经被`detach`的`std::thread`** 。`detach`断开了`std::thread`对象与执行线程之间的连接。
+- **已经被`detach`的`std::thread`** 。`detach`断开了`std::thread`对象与执行线程之间的连接。</u>
 
 （译者注：`std::thread`可以视作状态保存的对象，保存的状态可能也包括可调用对象，有没有具体的线程承载就是有没有连接）
 
-`std::thread`的可结合性如此重要的原因之一就是当可结合的线程的析构函数被调用，程序执行会终止。比如，假定有一个函数`doWork`，使用一个过滤函数`filter`，一个最大值`maxVal`作为形参。`doWork`检查是否满足计算所需的条件，然后使用在0到`maxVal`之间的通过过滤器的所有值进行计算。如果进行过滤非常耗时，并且确定`doWork`条件是否满足也很耗时，则将两件事并发计算是很合理的。
+<u>`std::thread`的可结合性如此重要的原因之一就是当可结合的线程的析构函数被调用，程序执行会终止</u>。比如，假定有一个函数`doWork`，使用一个过滤函数`filter`，一个最大值`maxVal`作为形参。`doWork`检查是否满足计算所需的条件，然后使用在0到`maxVal`之间的通过过滤器的所有值进行计算。如果进行过滤非常耗时，并且确定`doWork`条件是否满足也很耗时，则将两件事并发计算是很合理的。
 
 我们希望为此采用基于任务的设计（参见[Item35](../7.TheConcurrencyAPI/Item35.md)），但是假设我们希望设置做过滤的线程的优先级。[Item35](../7.TheConcurrencyAPI/Item35.md)阐释了那需要线程的原生句柄，只能通过`std::thread`的API来完成；基于任务的API（比如*future*）做不到。所以最终采用基于线程而不是基于任务。
 
@@ -55,17 +55,17 @@ constexpr auto tenMillion = 10'000'000;         //C++14
 
 还要指出，在开始运行之后设置`t`的优先级就像把马放出去之后再关上马厩门一样（译者注：太晚了）。更好的设计是在挂起状态时开始`t`（这样可以在执行任何计算前调整优先级），但是我不想你为考虑那些代码而分心。如果你对代码中忽略的部分感兴趣，可以转到[Item39](../7.TheConcurrencyAPI/item39.md)，那个Item告诉你如何以开始那些挂起状态的线程。
 
-返回`doWork`。如果`conditionsAreSatisfied()`返回`true`，没什么问题，但是如果返回`false`或者抛出异常，在`doWork`结束调用`t`的析构函数时，`std::thread`对象`t`会是可结合的。这造成程序执行中止。
+返回`doWork`。<u>如果`conditionsAreSatisfied()`返回`true`，没什么问题，但是如果返回`false`或者抛出异常，在`doWork`结束调用`t`的析构函数时，`std::thread`对象`t`会是可结合的。这造成程序执行中止。</u>
 
 你可能会想，为什么`std::thread`析构的行为是这样的，那是因为另外两种显而易见的方式更糟：
 
-- **隐式`join`** 。这种情况下，`std::thread`的析构函数将等待其底层的异步执行线程完成。这听起来是合理的，但是可能会导致难以追踪的异常表现。比如，如果`conditonAreStatisfied()`已经返回了`false`，`doWork`继续等待过滤器应用于所有值就很违反直觉。
+- **隐式`join`** 。这种情况下，`std::thread`的析构函数将等待其底层的异步执行线程完成。这听起来是合理的，但是<u>可能会导致难以追踪的异常表现。比如，如果`conditonAreStatisfied()`已经返回了`false`，`doWork`继续等待过滤器应用于所有值就很违反直觉</u>。
 
-- **隐式`detach`** 。这种情况下，`std::thread`析构函数会分离`std::thread`与其底层的线程。底层线程继续运行。听起来比`join`的方式好，但是可能导致更严重的调试问题。比如，在`doWork`中，`goodVals`是通过引用捕获的局部变量。它也被*lambda*修改（通过调用`push_back`）。假定，*lambda*异步执行时，`conditionsAreSatisfied()`返回`false`。这时，`doWork`返回，同时局部变量（包括`goodVals`）被销毁。栈被弹出，并在`doWork`的调用点继续执行线程。
+- **隐式`detach`** 。这种情况下，`std::thread`析构函数会分离`std::thread`与其底层的线程。底层线程继续运行。听起来比`join`的方式好，但是可能导致更严重的调试问题。比如，在`doWork`中，`goodVals`是通过引用捕获的局部变量。它也被*lambda*修改（通过调用`push_back`）。<u>假定，*lambda*异步执行时，`conditionsAreSatisfied()`返回`false`。这时，`doWork`返回，同时局部变量（包括`goodVals`）被销毁。栈被弹出，并在`doWork`的调用点继续执行线程。</u>
 
   调用点之后的语句有时会进行其他函数调用，并且至少一个这样的调用可能会占用曾经被`doWork`使用的栈位置。我们调用那么一个函数`f`。当`f`运行时，`doWork`启动的*lambda*仍在继续异步运行。该*lambda*可能在栈内存上调用`push_back`，该内存曾属于`goodVals`，但是现在是`f`的栈内存的某个位置。这意味着对`f`来说，内存被自动修改了！想象一下调试的时候“乐趣”吧。
 
-标准委员会认为，销毁可结合的线程如此可怕以至于实际上禁止了它（规定销毁可结合的线程导致程序终止）。
+<u>标准委员会认为，销毁可结合的线程如此可怕以至于实际上禁止了它（规定销毁可结合的线程导致程序终止）</u>。
 
 这使你有责任确保使用`std::thread`对象时，在所有的路径上超出定义所在的作用域时都是不可结合的。但是覆盖每条路径可能很复杂，可能包括自然执行通过作用域，或者通过`return`，`continue`，`break`，`goto`或异常跳出作用域，有太多可能的路径。
 
@@ -108,7 +108,7 @@ private:
 
 - `ThreadRAII`提供了`get`函数访问内部的`std::thread`对象。这类似于标准智能指针提供的`get`函数，可以提供访问原始指针的入口。提供`get`函数避免了`ThreadRAII`复制完整`std::thread`接口的需要，也意味着`ThreadRAII`可以在需要`std::thread`对象的上下文环境中使用。
 
-- 在`ThreadRAII`析构函数调用`std::thread`对象`t`的成员函数之前，检查`t`是否可结合。这是必须的，因为在不可结合的`std::thread`上调用`join`或`detach`会导致未定义行为。客户端可能会构造一个`std::thread`，然后用它构造一个`ThreadRAII`，使用`get`获取`t`，然后移动`t`，或者调用`join`或`detach`，每一个操作都使得`t`变为不可结合的。
+- <u>在`ThreadRAII`析构函数调用`std::thread`对象`t`的成员函数之前，检查`t`是否可结合。这是必须的，因为在不可结合的`std::thread`上调用`join`或`detach`会导致未定义行为</u>。客户端可能会构造一个`std::thread`，然后用它构造一个`ThreadRAII`，使用`get`获取`t`，然后移动`t`，或者调用`join`或`detach`，每一个操作都使得`t`变为不可结合的。
 
   如果你担心下面这段代码
 
@@ -190,3 +190,6 @@ private: // as before
 - 析构时`join`会导致难以调试的表现异常问题。
 - 析构时`detach`会导致难以调试的未定义行为。
 - 声明类数据成员时，最后声明`std::thread`对象。
+
+
+//fy笔记：没有完美解决方案？？？
