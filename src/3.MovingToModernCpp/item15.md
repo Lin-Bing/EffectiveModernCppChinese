@@ -18,9 +18,6 @@ std::array<int, sz> data1;          //错误！一样的问题
 constexpr auto arraySize2 = 10;     //没问题，10是
                                     //编译期可知常量
 std::array<int, arraySize2> data2;  //没问题, arraySize2是constexpr
-
-//fy笔记：const表示只能定义时赋值，之后不能修改，但不保证是编译时确定
-int nums[arraySize1]; //fy笔记：报错
 ```
 <u>注意`const`不提供`constexpr`所能保证之事，因为`const`对象不需要在编译期初始化它的值</u>。
  ```cpp
@@ -28,11 +25,12 @@ int sz;                            //和之前一样
 …
 const auto arraySize = sz;         //没问题，arraySize是sz的const复制
 std::array<int, arraySize> data;   //错误，arraySize值在编译期不可知
+//fy笔记：const表示只能定义时赋值，之后不能修改，但不保证是编译时确定
  ```
 
  简而言之，<u>所有`constexpr`对象都是`const`，但不是所有`const`对象都是`constexpr`。如果你想编译器保证一个变量有一个值，这个值可以放到那些需要编译期常量（compile-time constants）的上下文的地方，你需要的工具是`constexpr`而不是`const`。</u>
 
-涉及到`constexpr`函数时，`constexpr`对象的使用情况就更有趣了。如果实参是编译期常量，这些函数将产出编译期常量；如果实参是运行时才能知道的值，它们就将产出运行时值。这听起来就像你不知道它们要做什么一样，那么想是错误的，请这么看：
+<u>涉及到`constexpr`函数时，`constexpr`对象的使用情况就更有趣了。如果实参是编译期常量，这些函数将产出编译期常量；如果实参是运行时才能知道的值，它们就将产出运行时值</u>。这听起来就像你不知道它们要做什么一样，那么想是错误的，请这么看：
 + `constexpr`函数可以用于需求编译期常量的上下文。如果你传给`constexpr`函数的实参在编译期可知，那么结果将在编译期计算。如果实参的值在编译期不知道，你的代码就会被拒绝。
 + 当一个`constexpr`函数被一个或者多个编译期不可知值调用时，它就像普通函数一样，运行时计算它的结果。<u>这意味着你不需要两个函数，一个用于编译期计算，一个用于运行时计算。`constexpr`全做了。</u>
 
@@ -142,7 +140,7 @@ constexpr auto mid = midpoint(p1, p2);
 constexpr auto reflectedMid =         //reflectedMid的值
     reflection(mid);                  //(-19.1, -16.5)在编译期可知
 ```
-本条款的建议是尽可能的使用`constexpr`，现在我希望大家已经明白缘由：`constexpr`对象和`constexpr`函数可以使用的范围比non-`constexpr`对象和函数大得多。使用`constexpr`关键字可以最大化你的对象和函数可以使用的场景。
+<u>本条款的建议是尽可能的使用`constexpr`，现在我希望大家已经明白缘由：`constexpr`对象和`constexpr`函数可以使用的范围比non-`constexpr`对象和函数大得多</u>。使用`constexpr`关键字可以最大化你的对象和函数可以使用的场景。
 
 还有个重要的需要注意的是`constexpr`是对象和函数接口的一部分。加上`constexpr`相当于宣称“我能被用在C++要求常量表达式的地方”。如果你声明一个对象或者函数是`constexpr`，客户端程序员就可能会在那些场景中使用它。如果你后面认为使用`constexpr`是一个错误并想移除它，你可能造成大量客户端代码不能编译。（为了debug或者性能优化而添加I/O到一个函数中这样简单的动作可能就导致这样的问题，因为I/O语句一般不被允许出现在`constexpr`函数里）“尽可能”的使用`constexpr`表示你需要长期坚持对某个对象或者函数施加这种限制。
 

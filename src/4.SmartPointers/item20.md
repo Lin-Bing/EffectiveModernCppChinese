@@ -2,7 +2,7 @@
 
 **Item 20: Use `std::weak_ptr` for `std::shared_ptr`-like pointers that can dangle**
 
-自相矛盾的是，如果有一个像`std::shared_ptr`（见[Item19](../4.SmartPointers/item19.md)）的但是不参与资源所有权共享的指针是很方便的。换句话说，是一个类似`std::shared_ptr`但不影响对象引用计数的指针。这种类型的智能指针必须要解决一个`std::shared_ptr`不存在的问题：可能指向已经销毁的对象。一个真正的智能指针应该跟踪所指对象，在悬空时知晓，悬空（*dangle*）就是指针指向的对象不再存在。这就是对`std::weak_ptr`最精确的描述。
+自相矛盾的是，如果有一个像`std::shared_ptr`（见[Item19](../4.SmartPointers/item19.md)）的但是不参与资源所有权共享的指针是很方便的。换句话说，是一个类似`std::shared_ptr`但不影响对象引用计数的指针。<u>这种类型的智能指针必须要解决一个`std::shared_ptr`不存在的问题：可能指向已经销毁的对象</u>。一个真正的智能指针应该跟踪所指对象，在悬空时知晓，悬空（*dangle*）就是指针指向的对象不再存在。这就是对`std::weak_ptr`最精确的描述。
 
 你可能想知道什么时候该用`std::weak_ptr`。你可能想知道关于`std::weak_ptr` API的更多。它什么都好除了不太智能。`std::weak_ptr`不能解引用，也不能测试是否为空值。因为`std::weak_ptr`不是一个独立的智能指针。它是`std::shared_ptr`的增强。
 

@@ -4,7 +4,7 @@
 
 如果你已经读过[Item1](../1.DeducingTypes/item1.md)的模板类型推导，那么你几乎已经知道了`auto`类型推导的大部分内容，至于为什么不是全部是因为这里有一个`auto`不同于模板类型推导的例外。但这怎么可能？模板类型推导包括模板，函数，形参，但`auto`不处理这些东西啊。
 
-你是对的，但没关系。`auto`类型推导和模板类型推导有一个直接的映射关系。它们之间可以通过一个非常规范非常系统化的转换流程来转换彼此。
+你是对的，但没关系。<u>`auto`类型推导和模板类型推导有一个直接的映射关系。它们之间可以通过一个非常规范非常系统化的转换流程来转换彼此</u>。
 
 在[Item1](../1.DeducingTypes/item2.md)中，模板类型推导使用下面这个函数模板
 ````cpp
@@ -20,6 +20,8 @@ f(expr);                        //使用一些表达式调用f
 在`f`的调用中，编译器使用`expr`推导`T`和`ParamType`的类型。
 
 <u>当一个变量使用`auto`进行声明时，`auto`扮演了模板中`T`的角色，变量的类型说明符扮演了`ParamType`的角色。</u>废话少说，这里便是更直观的代码描述，考虑这个例子：
+
+> fy笔记：auto对于类型T，加上常量/引用修饰符的const auto &对应ParamType
 
 ````cpp
 auto x = 27;
@@ -89,7 +91,7 @@ int x = 27;
 int& uref1 = x;
 
 const int cx = x;
-const int& uref2 = cx;
+const int& uref2 = cx; // 左值的const属性保持
 
 int&& uref3 = 27;
 ```
@@ -163,7 +165,7 @@ void f(std::initializer_list<T> initList);
 f({ 11, 23, 9 });               //T被推导为int，initList的类型为
                                 //std::initializer_list<int>
 ````
-因此`auto`类型推导和模板类型推导的真正区别在于，`auto`类型推导假定花括号表示`std::initializer_list`而模板类型推导不会这样（确切的说是不知道怎么办）。
+因此<u>`auto`类型推导和模板类型推导的真正区别在于，`auto`类型推导假定花括号表示`std::initializer_list`而模板类型推导不会这样</u>（确切的说是不知道怎么办）。
 
 你可能想知道为什么`auto`类型推导和模板类型推导对于花括号有不同的处理方式。我也想知道。哎，我至今没找到一个令人信服的解释。但是规则就是规则，这意味着你必须记住如果你使用`auto`声明一个变量，并用花括号进行初始化，`auto`类型推导总会得出`std::initializer_list`的结果。如果你使用**uniform initialization（花括号的方式进行初始化）**用得很爽你就得记住这个例外以免犯错，在C++11编程中一个典型的错误就是偶然使用了`std::initializer_list<T>`类型的变量，这个陷阱也导致了很多C++程序员抛弃花括号初始化，只有不得不使用的时候再做考虑。（在[Item7](../3.MovingToModernCpp/item7.md)讨论了必须使用时该怎么做）
 

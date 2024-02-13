@@ -132,7 +132,7 @@ authAndAccess(Container&& c, Index i)
     return std::forward<Container>(c)[i];
 }
 ````
-这样就能对我们的期望交上一份满意的答卷，但是这要求编译器支持C++14。如果你没有这样的编译器，你还需要使用C++11版本的模板，它看起来和C++14版本的极为相似，除了你不得不指定函数返回类型之外：
+<u>这样就能对我们的期望交上一份满意的答卷，但是这要求编译器支持C++14</u>。如果你没有这样的编译器，你还需要使用C++11版本的模板，它看起来和C++14版本的极为相似，除了你不得不指定函数返回类型之外：
 ````cpp
 template<typename Container, typename Index>    //最终的C++11版本
 auto
