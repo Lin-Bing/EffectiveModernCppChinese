@@ -22,6 +22,9 @@ std::string petName("Darla");
 logAndAdd(petName);                     //传递左值std::string
 logAndAdd(std::string("Persephone"));	//传递右值std::string
 logAndAdd("Patty Dog");                 //传递字符串字面值
+
+logAndAdd(petName);                     //传递左值std::string
+//fy笔记：第一个调用，由于logAndAdd形参是引用，因此传参不用拷贝，添加到names需要一次拷贝；第二个调用，同理；第三个调用char*需要先构造临时对象std::string，添加到names也需要一次拷贝
 ```
 
 在第一个调用中，`logAndAdd`的形参`name`绑定到变量`petName`。在`logAndAdd`中`name`最终传给`names.emplace`。因为`name`是左值，会拷贝到`names`中。没有方法避免拷贝，因为是左值（`petName`）传递给`logAndAdd`的。
@@ -200,7 +203,7 @@ public:
 
 如同注释表示的，<u>派生类的拷贝和移动构造函数没有调用基类的拷贝和移动构造函数，而是调用了基类的完美转发构造函数！为了理解原因，要知道派生类将`SpecialPerson`类型的实参传递给其基类，然后通过模板实例化和重载解析规则作用于基类`Person`。最终，代码无法编译，因为`std::string`没有接受一个`SpecialPerson`的构造函数。</u>
 
-我希望到目前为止，已经说服了你，如果可能的话，避免对通用引用形参的函数进行重载。但是，如果在通用引用上重载是糟糕的主意，那么如果需要可转发大多数实参类型的函数，但是对于某些实参类型又要特殊处理应该怎么办？存在多种办法。实际上，下一个条款，[Item27](../5.RRefMovSemPerfForw/item27.md)专门来讨论这个问题，敬请阅读。
+我希望到目前为止，已经说服了你，<u>如果可能的话，避免对通用引用形参的函数进行重载</u>。但是，如果在通用引用上重载是糟糕的主意，那么如果需要可转发大多数实参类型的函数，但是对于某些实参类型又要特殊处理应该怎么办？存在多种办法。实际上，下一个条款，[Item27](../5.RRefMovSemPerfForw/item27.md)专门来讨论这个问题，敬请阅读。
 
 **请记住：**
 

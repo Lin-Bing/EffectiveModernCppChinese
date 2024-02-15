@@ -11,7 +11,7 @@ void func(T&& param);
 
 不管传给param的实参是左值还是右值，模板形参`T`都会编码。
 
-编码机制是简单的。当左值实参被传入时，`T`被推导为左值引用。当右值被传入时，`T`被推导为非引用。（请注意不对称性：左值被编码为左值引用，右值被编码为**非引用**。）因此：
+编码机制是简单的。<u>当左值实参被传入时，`T`被推导为左值引用。当右值被传入时，`T`被推导为非引用</u>。（请注意不对称性：左值被编码为左值引用，右值被编码为**非引用**。）因此：
 
 ```cpp
 Widget widgetFactory();     //返回右值的函数
@@ -130,6 +130,7 @@ Widget&& forward(typename
 ```cpp
 Widget&& forward(Widget& param)
 { return static_cast<Widget&&>(param); }
+//fy笔记：f的形参Widget&&fParam是右值引用类型，但是形参是左值，因此可以传递给forward的形参Widget& param
 ```
 
 <u>这里没有引用的引用，所以不需要引用折叠，这就是`std::forward`的最终实例化版本。</u>
